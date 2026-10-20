@@ -1,0 +1,301 @@
+
+pipeline {
+    agent any
+
+    parameters {
+        string(
+            name: 'DOCKERHUB_USERNAME',
+            defaultValue: 'chtnnn',
+            description: 'Docker Hub username'
+        )
+        string(
+            name: 'GITOPS_BRANCH',
+            defaultValue: 'main',
+            description: 'Git branch monitored by Argo CD'
+        )
+    }
+
+    environment {
+        IMAGE_PREFIX = "${params.DOCKERHUB_USERNAME}/shopsphere"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        K8S_DIR = "k8s"
+        NAMESPACE = "shopsphere"
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                checkout scm
+                sh '''
+                    set -eu
+                    test -f pom.xml
+                    test -f frontend/package.json
+                    test -d common
+                    test -d k8s
+                    git remote -v
+                '''
+            }
+        }
+
+        stage('Build Java Microservices') {
+            steps {
+                sh '''
+                    set -eu
+                    mvn -B clean package
+                '''
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        set -eu
+
+                        if [ -f package-lock.json ]; then
+                            npm ci
+                        else
+                            npm install
+                        fi
+
+                        npm run build
+                        test -d dist
+                    '''
+                }
+            }
+        }
+
+        stage('Validate Dockerfiles and Manifests') {
+            steps {
+                sh '''
+                    set -eu
+
+                    for service in \
+                        api-gateway \
+                        cart-service \
+                        notification-service \
+                        order-service \
+                        payment-service \
+                        product-service \
+                        review-service \
+                        shipping-service \
+                        user-service
+                    do
+                        test -f "$service/Dockerfile"
+                        test -f "$service/target/$service-1.0-SNAPSHOT.jar"
+                        test -f "$K8S_DIR/$service.yaml"
+                    done
+
+                    test -f frontend/Dockerfile
+                    test -f "$K8S_DIR/frontend.yaml"
+
+                    echo "All required Dockerfiles, JARs and manifests exist."
+                '''
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    def services = [
+                        'api-gateway',
+                        'cart-service',
+                        'notification-service',
+                        'order-service',
+                        'payment-service',
+                        'product-service',
+                        'review-service',
+                        'shipping-service',
+                        'user-service'
+                    ]
+
+                    def builds = [:]
+
+                    services.each { service ->
+                        def svc = service
+
+                        builds[svc] = {
+                            sh """
+                                docker build \
+                                  -f ${svc}/Dockerfile \
+                                  -t ${IMAGE_PREFIX}-${svc}:${IMAGE_TAG} \
+                                  .
+                            """
+                        }
+                    }
+
+                    builds['frontend'] = {
+                        sh """
+                            docker build \
+                              -f frontend/Dockerfile \
+                              -t ${IMAGE_PREFIX}-frontend:${IMAGE_TAG} \
+                              frontend
+                        """
+                    }
+
+                    parallel builds
+                }
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DH_USER',
+                        passwordVariable: 'DH_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+                        printf '%s' "$DH_TOKEN" |
+                            docker login -u "$DH_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Images to Docker Hub') {
+            steps {
+                sh '''
+                    set -eu
+
+                    for service in \
+                        api-gateway \
+                        cart-service \
+                        notification-service \
+                        order-service \
+                        payment-service \
+                        product-service \
+                        review-service \
+                        shipping-service \
+                        user-service \
+                        frontend
+                    do
+                        docker push "$IMAGE_PREFIX-$service:$IMAGE_TAG"
+                    done
+                '''
+            }
+        }
+
+        stage('Update Kubernetes Image Tags') {
+            steps {
+                sh '''
+                    set -eu
+
+                    for service in \
+                        api-gateway \
+                        cart-service \
+                        notification-service \
+                        order-service \
+                        payment-service \
+                        product-service \
+                        review-service \
+                        shipping-service \
+                        user-service \
+                        frontend
+                    do
+                        manifest="$K8S_DIR/$service.yaml"
+                        image="$IMAGE_PREFIX-$service:$IMAGE_TAG"
+
+                        test -f "$manifest"
+
+                        sed -i -E \
+                          "s|image: *shopsphere/${service}:latest|image: ${image}|" \
+                          "$manifest"
+
+                        grep -Fq "image: $image" "$manifest" || {
+                            echo "Failed to update image in $manifest"
+                            exit 1
+                        }
+                    done
+
+                    echo "Updated Kubernetes images:"
+                    grep -n 'image:' "$K8S_DIR"/*.yaml
+                '''
+            }
+        }
+
+        stage('Commit and Push GitOps Changes') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'github-write-credentials',
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@example.com"
+
+                        git add "$K8S_DIR"
+
+                        if git diff --cached --quiet; then
+                            echo "No manifest changes to commit."
+                            exit 0
+                        fi
+
+                        git commit -m "ci: update ShopSphere images to build $IMAGE_TAG"
+
+                        # Use the repository already checked out by Jenkins.
+                        # GIT_ASKPASS keeps the token out of the remote URL.
+                        ASKPASS_FILE="$(mktemp)"
+                        trap 'rm -f "$ASKPASS_FILE"' EXIT
+
+                        cat > "$ASKPASS_FILE" <<'ASKPASS'
+#!/bin/sh
+case "$1" in
+    *Username*) printf '%s\\n' "$GIT_USER" ;;
+    *Password*) printf '%s\\n' "$GIT_TOKEN" ;;
+    *) exit 1 ;;
+esac
+ASKPASS
+
+                        chmod 700 "$ASKPASS_FILE"
+
+                        export GIT_ASKPASS="$ASKPASS_FILE"
+                        export GIT_TERMINAL_PROMPT=0
+
+                        git push origin "HEAD:${GITOPS_BRANCH}"
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'ShopSphere images pushed and GitOps manifests updated. Argo CD can sync the new image tags.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Inspect the failed stage before retrying.'
+        }
+
+        always {
+            sh '''
+                docker logout >/dev/null 2>&1 || true
+
+                for service in \
+                    api-gateway \
+                    cart-service \
+                    notification-service \
+                    order-service \
+                    payment-service \
+                    product-service \
+                    review-service \
+                    shipping-service \
+                    user-service \
+                    frontend
+                do
+                    docker rmi "$IMAGE_PREFIX-$service:$IMAGE_TAG" \
+                        >/dev/null 2>&1 || true
+                done
+            '''
+        }
+    }
+}
