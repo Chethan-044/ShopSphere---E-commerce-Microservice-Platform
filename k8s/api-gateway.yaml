@@ -6,7 +6,7 @@ metadata:
   labels:
     app: api-gateway
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: api-gateway
@@ -54,7 +54,7 @@ metadata:
   labels:
     app: api-gateway
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: api-gateway
   ports:

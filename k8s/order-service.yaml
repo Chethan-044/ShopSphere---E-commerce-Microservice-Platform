@@ -6,7 +6,7 @@ metadata:
   labels:
     app: order-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: order-service
@@ -34,14 +34,12 @@ spec:
               memory: "512Mi"
               cpu: "500m"
           readinessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8082
             initialDelaySeconds: 30
             periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8082
             initialDelaySeconds: 60
             periodSeconds: 20

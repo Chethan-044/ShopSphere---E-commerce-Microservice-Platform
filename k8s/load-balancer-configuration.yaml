@@ -1,0 +1,10 @@
+
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
+metadata:
+  name: shopsphere-alb-config
+  namespace: shopsphere
+spec:
+  listenerConfigurations:
+    - protocolPort: HTTPS:443
+      defaultCertificate: arn:aws:acm:us-east-1:216482850616:certificate/d2426b3c-5c0a-4592-b626-a3478578c81a

@@ -1,21 +1,22 @@
-version: '3.8'
 
 services:
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - JWT_SECRET=${JWT_SECRET:-mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm2024}
-      - USER_SERVICE_URL=http://user-service:8083
-      - PRODUCT_SERVICE_URL=http://product-service:8081
-      - ORDER_SERVICE_URL=http://order-service:8082
-      - CART_SERVICE_URL=http://cart-service:8084
-      - PAYMENT_SERVICE_URL=http://payment-service:8085
-      - SHIPPING_SERVICE_URL=http://shipping-service:8086
-      - NOTIFICATION_SERVICE_URL=http://notification-service:8087
-      - REVIEW_SERVICE_URL=http://review-service:8088
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm2024}
+      USER_SERVICE_URL: http://user-service:8083
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      ORDER_SERVICE_URL: http://order-service:8082
+      CART_SERVICE_URL: http://cart-service:8084
+      PAYMENT_SERVICE_URL: http://payment-service:8085
+      SHIPPING_SERVICE_URL: http://shipping-service:8086
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
+      REVIEW_SERVICE_URL: http://review-service:8088
     depends_on:
       - user-service
       - product-service
@@ -23,14 +24,19 @@ services:
       - shopsphere-network
 
   product-service:
-    build: ./product-service
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
     ports:
       - "8081:8081"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
-      - ELASTICSEARCH_URI=http://elasticsearch:9200
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: "27017"
+      MONGODB_USERNAME: root
+      MONGODB_PASSWORD: root
+      REDIS_HOST: redis
+      ELASTICSEARCH_URI: http://elasticsearch:9200
     depends_on:
       - mongodb
       - redis
@@ -39,15 +45,17 @@ services:
       - shopsphere-network
 
   order-service:
-    build: ./order-service
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
     ports:
       - "8082:8082"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
-      - PRODUCT_SERVICE_URL=http://product-service:8081
-      - NOTIFICATION_SERVICE_URL=http://notification-service:8087
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
     depends_on:
       - mongodb
       - redis
@@ -55,14 +63,16 @@ services:
       - shopsphere-network
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     ports:
       - "8083:8083"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
-      - JWT_SECRET=${JWT_SECRET:-mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm2024}
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm2024}
     depends_on:
       - mongodb
       - redis
@@ -70,13 +80,15 @@ services:
       - shopsphere-network
 
   cart-service:
-    build: ./cart-service
+    build:
+      context: .
+      dockerfile: cart-service/Dockerfile
     ports:
       - "8084:8084"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
     depends_on:
       - mongodb
       - redis
@@ -84,14 +96,16 @@ services:
       - shopsphere-network
 
   payment-service:
-    build: ./payment-service
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
     ports:
       - "8085:8085"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
     depends_on:
       - mongodb
       - redis
@@ -99,13 +113,15 @@ services:
       - shopsphere-network
 
   shipping-service:
-    build: ./shipping-service
+    build:
+      context: .
+      dockerfile: shipping-service/Dockerfile
     ports:
       - "8086:8086"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
     depends_on:
       - mongodb
       - redis
@@ -113,15 +129,17 @@ services:
       - shopsphere-network
 
   notification-service:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     ports:
       - "8087:8087"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     depends_on:
       - mongodb
       - redis
@@ -129,13 +147,15 @@ services:
       - shopsphere-network
 
   review-service:
-    build: ./review-service
+    build:
+      context: .
+      dockerfile: review-service/Dockerfile
     ports:
       - "8088:8088"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_HOST=mongodb
-      - REDIS_HOST=redis
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_HOST: mongodb
+      REDIS_HOST: redis
     depends_on:
       - mongodb
       - redis
@@ -147,8 +167,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=root
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -159,10 +179,9 @@ services:
     ports:
       - "9200:9200"
     environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - ELASTIC_PASSWORD=changeme
-      - xpack.security.enabled=false
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      xpack.security.enabled: "false"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:

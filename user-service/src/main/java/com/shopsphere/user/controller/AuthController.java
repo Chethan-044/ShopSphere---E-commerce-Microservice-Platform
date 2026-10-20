@@ -2,6 +2,7 @@ package com.shopsphere.user.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -80,28 +81,34 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Authenticate a user and return a JWT token")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        log.info("Authenticating user: {}", request.getUsername());
+        log.info("Authenticating user: '{}', password length: {}", request.getUsername(), request.getPassword() != null ? request.getPassword().length() : 0);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
 
-        User user = (User) authentication.getPrincipal();
+            User user = (User) authentication.getPrincipal();
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRoles());
+            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRoles());
 
-        AuthResponse authResponse = AuthResponse.builder()
-                .token(token)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .roles(user.getRoles())
-                .build();
+            AuthResponse authResponse = AuthResponse.builder()
+                    .token(token)
+                    .userId(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .roles(user.getRoles())
+                    .build();
 
-        return ResponseEntity.ok(ApiResponse.success("Login successful", authResponse));
+            return ResponseEntity.ok(ApiResponse.success("Login successful", authResponse));
+        } catch (Exception e) {
+            log.error("Login failed for user '{}': {} ({})", request.getUsername(), e.getMessage(), e.getClass().getName());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid username or password"));
+        }
     }
 
     @PostMapping("/refresh")

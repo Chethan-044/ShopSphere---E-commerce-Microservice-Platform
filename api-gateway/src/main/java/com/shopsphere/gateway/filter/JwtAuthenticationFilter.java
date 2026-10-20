@@ -78,6 +78,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             List<String> roles = claims.get("roles", List.class);
             String rolesStr = roles != null ? String.join(",", roles) : "";
 
+            // Enforce RBAC for admin-only operations
+            if (isAdminEndpoint(request)) {
+                if (roles == null || !roles.contains("ROLE_ADMIN")) {
+                    log.warn("Access denied to {}: User {} does not have ROLE_ADMIN", path, userId);
+                    return onError(exchange, "Access denied: Administrator privileges required", HttpStatus.FORBIDDEN);
+                }
+            }
+
             // Add user info headers to downstream request
             ServerHttpRequest modifiedRequest = request.mutate()
                     .header("X-User-Id", userId)
@@ -95,6 +103,47 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private boolean isOpenEndpoint(String path) {
         return OPEN_ENDPOINTS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
+    }
+
+    private boolean isAdminEndpoint(ServerHttpRequest request) {
+        String path = request.getURI().getPath();
+        HttpMethod method = request.getMethod();
+
+        // Admin user management (listing all users or deleting users)
+        if ("/api/v1/users".equals(path) && HttpMethod.GET.equals(method)) {
+            return true;
+        }
+        if (pathMatcher.match("/api/v1/users/**", path) && HttpMethod.DELETE.equals(method)) {
+            return true;
+        }
+
+        // Product management (creating, updating, deleting products)
+        if (pathMatcher.match(PRODUCTS_PATH, path) &&
+                (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.DELETE.equals(method))) {
+            return true;
+        }
+
+        // Review moderation
+        if (pathMatcher.match("/api/v1/reviews/pending", path) ||
+                pathMatcher.match("/api/v1/reviews/*/approve", path) ||
+                pathMatcher.match("/api/v1/reviews/*/reject", path) ||
+                pathMatcher.match("/api/v1/reviews/*/feature", path) ||
+                pathMatcher.match("/api/v1/reviews/*/unfeature", path)) {
+            return true;
+        }
+
+        // Order status moderation
+        if (pathMatcher.match("/api/v1/orders/status/**", path) ||
+                (pathMatcher.match("/api/v1/orders/*/status", path) && HttpMethod.PATCH.equals(method))) {
+            return true;
+        }
+
+        // Shipment status updates
+        if (pathMatcher.match("/api/v1/shipments/*/status", path) && HttpMethod.PUT.equals(method)) {
+            return true;
+        }
+
+        return false;
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {

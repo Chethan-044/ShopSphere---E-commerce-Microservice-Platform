@@ -1,8 +1,8 @@
+# ==============================================================================
+# Java & Build Tools
+# ==============================================================================
 # Compiled class files
 *.class
-
-# Log files
-*.log
 
 # Package files
 *.jar
@@ -28,14 +28,110 @@ buildNumber.properties
 .gradle/
 build/
 
-# IDE - IntelliJ
+# ==============================================================================
+# Node & Frontend
+# ==============================================================================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+frontend/.vite/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==============================================================================
+# Python & Backend
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+.venv/
+venv/
+
+# ==============================================================================
+# Terraform & Infrastructure
+# ==============================================================================
+# Local .terraform directories and provider binaries (very large .exe files)
+**/.terraform/
+.terraform/
+
+# Terraform lock file
+.terraform.lock.hcl
+**/.terraform.lock.hcl
+
+# State files & backups
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+**/*.tfstate
+**/*.tfstate.*
+.terraform.tfstate*
+**/.terraform.tfstate*
+
+# Variable definition files (may contain secrets)
+*.tfvars
+*.tfvars.json
+**/*.tfvars
+**/*.tfvars.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration
+.terraformrc
+terraform.rc
+
+# ==============================================================================
+# Keys, Secrets & Certificates
+# ==============================================================================
+*.pem
+*.key
+*.pub
+credentials
+*bastion-key*
+eks-mp-bastion-key.pem
+
+# Environment files
+.env
+.env.*
+*.env.local
+!.env.example
+
+# ==============================================================================
+# Databases, Logs & Temporary Dumps
+# ==============================================================================
+*.log
+.logs/
+dump.rdb
+*-dump.txt
+*-review.txt
+k8s-review.txt
+k8s-yaml-dump.txt
+
+# ==============================================================================
+# IDEs & Operating System
+# ==============================================================================
+# IntelliJ
 .idea/
 *.iws
 *.iml
 *.ipr
 out/
 
-# IDE - Eclipse
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -45,13 +141,10 @@ out/
 .sts4-cache
 bin/
 
-# IDE - VS Code
+# VS Code
 .vscode/
 
 # OS files
 .DS_Store
 Thumbs.db
-
-# Environment files
-.env
-*.env.local
+desktop.ini
