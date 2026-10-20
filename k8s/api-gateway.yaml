@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: shopsphere/api-gateway:latest
+          image: chtnnn/shopsphere-api-gateway:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

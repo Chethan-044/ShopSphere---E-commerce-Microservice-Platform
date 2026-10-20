@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: cart-service
-          image: shopsphere/cart-service:latest
+          image: chtnnn/shopsphere-cart-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8084

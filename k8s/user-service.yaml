@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: shopsphere/user-service:latest
+          image: chtnnn/shopsphere-user-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8083

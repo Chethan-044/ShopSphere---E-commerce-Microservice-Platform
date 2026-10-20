@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: review-service
-          image: shopsphere/review-service:latest
+          image: chtnnn/shopsphere-review-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8088

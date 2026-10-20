@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: shopsphere/notification-service:latest
+          image: chtnnn/shopsphere-notification-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8087

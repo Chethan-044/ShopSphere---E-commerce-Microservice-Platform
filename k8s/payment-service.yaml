@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: shopsphere/payment-service:latest
+          image: chtnnn/shopsphere-payment-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8085

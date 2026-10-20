@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: shopsphere/frontend:latest
+          image: chtnnn/shopsphere-frontend:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

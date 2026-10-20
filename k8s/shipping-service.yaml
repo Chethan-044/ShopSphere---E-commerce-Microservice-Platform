@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: shipping-service
-          image: shopsphere/shipping-service:latest
+          image: chtnnn/shopsphere-shipping-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8086

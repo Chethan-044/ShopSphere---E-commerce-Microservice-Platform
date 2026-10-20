@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: shopsphere/order-service:latest
+          image: chtnnn/shopsphere-order-service:5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
