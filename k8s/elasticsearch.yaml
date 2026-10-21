@@ -4,9 +4,13 @@ metadata:
   name: elasticsearch-pvc
   namespace: shopsphere
 spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: ebs-gp3
-  resources:
-    requests:
-      storage: 10Gi
+  template:
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: elasticsearch
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 0
