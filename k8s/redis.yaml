@@ -6,9 +6,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: ebs-gp3
   resources:
     requests:
-      storage: 2Gi
+      storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
