@@ -56,7 +56,7 @@ eksctl create iamserviceaccount `
     --cluster=eks-mp `
     --namespace=kube-system `
     --name=aws-load-balancer-controller `
-    --attach-policy-arn=arn:aws:iam::216482850616:policy/AWSLoadBalancerControllerIAMPolicy `
+    --attach-policy-arn=arn:aws:iam::ACC_ID:policy/AWSLoadBalancerControllerIAMPolicy `
     --override-existing-serviceaccounts `
     --region us-east-1 `
     --approve
