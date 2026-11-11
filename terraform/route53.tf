@@ -51,16 +51,3 @@
    ]
  }
 
-
-eksctl create iamserviceaccount `
-    --cluster=eks-mp `
-    --namespace=kube-system `
-    --name=aws-load-balancer-controller `
-    --attach-policy-arn=arn:aws:iam::ACC_ID:policy/AWSLoadBalancerControllerIAMPolicy `
-    --override-existing-serviceaccounts `
-    --region us-east-1 `
-    --approve
-
-   aws iam list-roles `
-  --query "Roles[?contains(RoleName, 'aws-load-balancer-controller') || contains(RoleName, 'LoadBalancerController')].RoleName" `
-  --output table
